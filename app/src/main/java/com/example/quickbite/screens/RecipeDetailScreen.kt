@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,6 +19,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.remember
 import com.example.quickbite.model.Recipe
 import kotlinx.serialization.json.Json
@@ -61,94 +66,102 @@ fun RecipeDetailScreen(
         return
     }
 
-    LazyColumn(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-
-        item {
+    Scaffold(
+        topBar = {
             TopAppBar(
                 title = { Text(fullRecipe!!.strMeal) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.Black // Black for contrast
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    navigationIconContentColor = Color.White
+                ),
+                modifier = Modifier
+                    .zIndex(1f)
             )
-        }
+        },
+        containerColor = Color.Transparent,
+        modifier = Modifier.background(MaterialTheme.colorScheme.background)
+    ) { innerPadding ->
+        LazyColumn(
+            contentPadding = innerPadding,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+            item {
+                Text(
+                    text = fullRecipe!!.strMeal,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
 
-        item {
-            Text(
-                text = fullRecipe!!.strMeal,
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-
-        item {
-            fullRecipe!!.strMealThumb?.let {
+            item {
                 AsyncImage(
-                    model = it,
-                    contentDescription = fullRecipe!!.strMeal,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
+                    model = recipe.strMealThumb,
+                    contentDescription = recipe.strMeal,
+                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
-        }
 
-        item {
-            Text("Category: ${fullRecipe!!.strCategory ?: "N/A"}")
-        }
+            item {
+                Text("Category: ${fullRecipe!!.strCategory ?: "N/A"}")
+            }
 
-        item {
-            Text("Area: ${fullRecipe!!.strArea ?: "N/A"}")
-        }
+            item {
+                Text("Area: ${fullRecipe!!.strArea ?: "N/A"}")
+            }
 
-        item {
-            Text("Ingredients:", style = MaterialTheme.typography.titleLarge)
-        }
+            item {
+                Text("Ingredients:", style = MaterialTheme.typography.titleLarge)
+            }
 
-        // Pairs Ingredients and Measurements together
-        items(fullRecipe!!.strIngredients.zip(fullRecipe!!.strMeasures)) { (ingredient, measure) ->
-            Text("- $ingredient: $measure")
-        }
+            // Pairs Ingredients and Measurements together
+            items(fullRecipe!!.strIngredients.zip(fullRecipe!!.strMeasures)) { (ingredient, measure) ->
+                Text("- $ingredient: $measure")
+            }
 
-        item {
-            Text("Instructions:", style = MaterialTheme.typography.titleLarge)
-        }
+            item {
+                Text("Instructions:", style = MaterialTheme.typography.titleLarge)
+            }
 
-        item {
-            Text(fullRecipe!!.strInstructions ?: "No instructions available")
-        }
+            item {
+                Text(fullRecipe!!.strInstructions ?: "No instructions available")
+            }
 
-        item {
-            Text(
-                text = "Video Instructions",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        item {
-            fullRecipe!!.strYoutube?.let { url ->
-                val videoKey = url.substringAfter("v=")
-                val video = Video(
-                    name = "Watch on YouTube",
-                    key = videoKey,
-                    url = url
+            item {
+                Text(
+                    text = "Video Instructions",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                VideoDisplay(video = video)
+            }
+
+            item {
+                fullRecipe!!.strYoutube?.let { url ->
+                    val videoKey = url.substringAfter("v=")
+                    val video = Video(
+                        name = "Watch on YouTube",
+                        key = videoKey,
+                        url = url
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    VideoDisplay(video = video)
+                }
             }
         }
-
     }
 }
+
 
 suspend fun fetchRecipeById(id: String): Recipe? {
     return withContext(Dispatchers.IO) {
