@@ -19,5 +19,11 @@ data class Recipe(
 
 )
 
+data class Video(
+    val name: String,
+    val key: String,
+    val site: String = "YouTube",
+    val url: String
+)
 
 

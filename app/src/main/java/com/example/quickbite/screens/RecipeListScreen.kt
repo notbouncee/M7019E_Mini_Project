@@ -131,7 +131,7 @@ fun CategoryDropdownMenu(
     var selectedText by remember { mutableStateOf(selectedCategory) }
 
     LaunchedEffect(selectedCategory) {
-        selectedText = selectedCategory // ✅ Sync external updates
+        selectedText = selectedCategory
     }
 
     ExposedDropdownMenuBox(

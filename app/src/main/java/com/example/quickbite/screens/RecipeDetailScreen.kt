@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.quickbite.model.Video
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,11 +103,14 @@ fun RecipeDetailScreen(
 
         item {
             Text("Category: ${fullRecipe!!.strCategory ?: "N/A"}")
+        }
+
+        item {
             Text("Area: ${fullRecipe!!.strArea ?: "N/A"}")
         }
 
         item {
-            Text("Ingredients:", style = MaterialTheme.typography.titleMedium)
+            Text("Ingredients:", style = MaterialTheme.typography.titleLarge)
         }
 
         // Pairs Ingredients and Measurements together
@@ -115,9 +119,34 @@ fun RecipeDetailScreen(
         }
 
         item {
-            Text("Instructions:", style = MaterialTheme.typography.titleMedium)
+            Text("Instructions:", style = MaterialTheme.typography.titleLarge)
+        }
+
+        item {
             Text(fullRecipe!!.strInstructions ?: "No instructions available")
         }
+
+        item {
+            Text(
+                text = "Video Instructions",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        item {
+            fullRecipe!!.strYoutube?.let { url ->
+                val videoKey = url.substringAfter("v=")
+                val video = Video(
+                    name = "Watch on YouTube",
+                    key = videoKey,
+                    url = url
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                VideoDisplay(video = video)
+            }
+        }
+
     }
 }
 

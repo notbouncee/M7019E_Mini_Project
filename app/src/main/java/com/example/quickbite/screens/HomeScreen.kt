@@ -64,12 +64,8 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
     }
 
     fun loadCategory(category: String) {
-        selectedCategory = category
-        scope.launch {
-            val result = withContext(Dispatchers.IO) {
-                fetchFilteredRecipes(category)
-            }
-            filteredRecipes = result
+        scope.launch(Dispatchers.IO) {
+            filteredRecipes = fetchFilteredRecipes(category)
         }
     }
 
@@ -113,7 +109,6 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
 
 suspend fun fetchFilteredRecipes(category: String): List<Recipe> {
     val url = "https://www.themealdb.com/api/json/v1/${Constants.API_KEY}/filter.php?c=${category}"
-    Log.d("FETCH_RECIPES", "Fetching for category: $category")
 
     val client = OkHttpClient()
     val request = Request.Builder().url(url).build()
@@ -121,7 +116,6 @@ suspend fun fetchFilteredRecipes(category: String): List<Recipe> {
     return try {
         val response = client.newCall(request).execute()
         val json = response.body?.string() ?: return emptyList()
-        Log.d("FETCH_RECIPES", "Response: $json")
 
         val jsonObject = JSONObject(json)
         val mealsArray = jsonObject.optJSONArray("meals") ?: return emptyList()
@@ -137,7 +131,6 @@ suspend fun fetchFilteredRecipes(category: String): List<Recipe> {
                 )
             )
         }
-        Log.d("FETCH_RECIPES", "Fetched ${recipes.size} recipes")
         recipes
     } catch (e: Exception) {
         Log.e("FETCH_ERROR", "Error: ${e.message}")
