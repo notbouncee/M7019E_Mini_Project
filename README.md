@@ -4,8 +4,8 @@ Taken at Luleå University of Technology 🇸🇪 and mapped to IM3180 Design an
 
 # Topics
 
-• Kotlin
-• Android Studio
+- Kotlin
+- Android Studio
 
 ## QuickBite
 
