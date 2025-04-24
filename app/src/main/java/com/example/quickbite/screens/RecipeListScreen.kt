@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import com.example.quickbite.model.Recipe
 fun RecipeListScreen(
     filteredRecipes: List<Recipe>,
     onRecipeClick: (Recipe) -> Unit,
+    selectedCategory: String,
     onCategorySelected: (String) -> Unit
 ) {
     Column(
@@ -54,7 +56,14 @@ fun RecipeListScreen(
     ) {
         CategoryDropdownMenu(
             categories = listOf("Starter", "Breakfast", "Beef", "Chicken", "Pork", "Seafood", "Lamb", "Goat", "Pasta", "Vegetarian", "Vegan", "Side", "Dessert", "Miscellaneous"),
+            selectedCategory = selectedCategory,
             onCategorySelected = onCategorySelected
+        )
+
+        Text(
+            text = "Recipes loaded: ${filteredRecipes.size}",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(8.dp)
         )
 
         LazyVerticalGrid(
@@ -104,6 +113,7 @@ fun RecipeCard(
                     .fillMaxHeight(),
                 contentScale = ContentScale.Crop
             )
+            Text(recipe.strMeal, modifier = Modifier.padding(8.dp))
 
         }
     }
@@ -114,10 +124,15 @@ fun RecipeCard(
 @Composable
 fun CategoryDropdownMenu(
     categories: List<String>,
+    selectedCategory: String,
     onCategorySelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf("Select Category") }
+    var selectedText by remember { mutableStateOf(selectedCategory) }
+
+    LaunchedEffect(selectedCategory) {
+        selectedText = selectedCategory // ✅ Sync external updates
+    }
 
     ExposedDropdownMenuBox(
         expanded = expanded,

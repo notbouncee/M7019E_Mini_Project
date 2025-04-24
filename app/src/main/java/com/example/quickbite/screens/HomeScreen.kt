@@ -41,6 +41,7 @@ import okhttp3.Request
 import org.json.JSONObject
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.withContext
 
 
 enum class HomeScreen(@StringRes val title: Int){
@@ -54,16 +55,21 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     var filteredRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+    var selectedCategory by remember { mutableStateOf("Starter") }
 
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
-            filteredRecipes = fetchFilteredRecipes("Breakfast")
+            filteredRecipes = fetchFilteredRecipes("Starter")
         }
     }
 
     fun loadCategory(category: String) {
-        scope.launch(Dispatchers.IO) {
-            filteredRecipes = fetchFilteredRecipes(category)
+        selectedCategory = category
+        scope.launch {
+            val result = withContext(Dispatchers.IO) {
+                fetchFilteredRecipes(category)
+            }
+            filteredRecipes = result
         }
     }
 
@@ -75,11 +81,13 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
         composable(HomeScreen.List.name) {
             RecipeListScreen(
                 filteredRecipes = filteredRecipes,
+                selectedCategory = selectedCategory,
                 onRecipeClick = { recipe ->
                     viewModel.setSelectedRecipe(recipe)  //  viewModel handles selection
                     navController.navigate(HomeScreen.Detail.name)
                 },
                 onCategorySelected = { category ->
+                    Log.d("CATEGORY_SELECTED", "User selected category: $category")
                     loadCategory(category)
                 }
             )
@@ -105,12 +113,16 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
 
 suspend fun fetchFilteredRecipes(category: String): List<Recipe> {
     val url = "https://www.themealdb.com/api/json/v1/${Constants.API_KEY}/filter.php?c=${category}"
+    Log.d("FETCH_RECIPES", "Fetching for category: $category")
+
     val client = OkHttpClient()
     val request = Request.Builder().url(url).build()
 
     return try {
         val response = client.newCall(request).execute()
         val json = response.body?.string() ?: return emptyList()
+        Log.d("FETCH_RECIPES", "Response: $json")
+
         val jsonObject = JSONObject(json)
         val mealsArray = jsonObject.optJSONArray("meals") ?: return emptyList()
 
@@ -125,6 +137,7 @@ suspend fun fetchFilteredRecipes(category: String): List<Recipe> {
                 )
             )
         }
+        Log.d("FETCH_RECIPES", "Fetched ${recipes.size} recipes")
         recipes
     } catch (e: Exception) {
         Log.e("FETCH_ERROR", "Error: ${e.message}")
