@@ -4,8 +4,8 @@ Taken at Luleå University of Technology 🇸🇪 and mapped to IM3180 Design an
 
 # Topics
 
- • Kotlin
- • Android Studio
+• Kotlin
+• Android Studio
 
 ## QuickBite
 
@@ -19,9 +19,7 @@ Taken at Luleå University of Technology 🇸🇪 and mapped to IM3180 Design an
 
 1. Home Screen – Recipe List
  • Shows a list of recipes with:
- • Recipe name
  • Thumbnail image
- • Short description (e.g., “15-min pasta”)
  • Tap on any recipe to navigate to the Recipe Details screen.
 
 UI Elements:
