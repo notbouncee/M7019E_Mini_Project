@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    kotlin("plugin.serialization") version "1.9.22"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -42,6 +42,7 @@ android {
 
 dependencies {
 
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -51,16 +52,22 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-
     // Coil Image Dependency
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.coil.compose.v250)
+    implementation(libs.androidx.navigation.runtime.ktx)
 
-    // Serialization
-    implementation(libs.kotlinx.serialization.json)
+    // Exoplayer
+    implementation(libs.exoplayer)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 
+    // Retrofit
+    implementation(libs.retrofit)
+
+    // Converter for JSON to Kotlin data classes (Gson)
+    implementation(libs.converter.gson)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

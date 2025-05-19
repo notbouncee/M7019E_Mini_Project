@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -24,20 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.remember
 import com.example.quickbite.model.Recipe
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.JsonElement
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,20 +35,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.quickbite.model.Video
+import com.example.quickbite.viewmodel.QuickBiteViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailScreen(
     recipe: Recipe,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: QuickBiteViewModel = viewModel()
 ) {
-    var fullRecipe by remember { mutableStateOf<Recipe?>(null) }
+    val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsState()
+    val fullRecipe = uiState.selectedRecipe
 
     LaunchedEffect(recipe.idMeal) {
-        fullRecipe = fetchRecipeById(recipe.idMeal)
+        viewModel.fetchFullRecipeById(recipe.idMeal)
     }
 
     if (fullRecipe == null) {
@@ -69,7 +64,7 @@ fun RecipeDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(fullRecipe!!.strMeal) },
+                title = { Text(fullRecipe.strMeal) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -99,7 +94,7 @@ fun RecipeDetailScreen(
     ) {
             item {
                 Text(
-                    text = fullRecipe!!.strMeal,
+                    text = fullRecipe.strMeal,
                     style = MaterialTheme.typography.headlineMedium
                 )
             }
@@ -163,57 +158,57 @@ fun RecipeDetailScreen(
 }
 
 
-suspend fun fetchRecipeById(id: String): Recipe? {
-    return withContext(Dispatchers.IO) {
-        try {
-            val url = "https://www.themealdb.com/api/json/v1/1/lookup.php?i=$id"
-            val client = OkHttpClient()
-            val request = Request.Builder().url(url).build()
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext null
-            val json = Json.parseToJsonElement(body).jsonObject
-            val meals = json["meals"]?.jsonArray ?: return@withContext null
-            val recipeJson = meals.first().jsonObject
-            parseRecipe(recipeJson)
-        } catch (e: Exception) {
-            null
-        }
-    }
-}
-
-fun parseRecipe(json: JsonObject): Recipe {
-    val idMeal = json["idMeal"]?.jsonPrimitive?.content ?: ""
-    val strMeal = json["strMeal"]?.jsonPrimitive?.content ?: ""
-    val strMealAlternative = json["strMeal"]?.jsonPrimitive?.content ?: ""
-    val strCategory = json["strCategory"]?.jsonPrimitive?.contentOrNull
-    val strArea = json["strArea"]?.jsonPrimitive?.contentOrNull
-    val strInstructions = json["strInstructions"]?.jsonPrimitive?.contentOrNull
-    val strMealThumb = json["strMealThumb"]?.jsonPrimitive?.contentOrNull
-    val strTagsRaw = json["strTags"]?.jsonPrimitive?.contentOrNull
-    val strTags = strTagsRaw?.split(",")?.map { it.trim() } ?: emptyList()
-    val strYoutube = json["strYoutube"]?.jsonPrimitive?.contentOrNull
-
-    val ingredients = mutableListOf<String>()
-    val measures = mutableListOf<String>()
-
-    for (i in 1..20) {
-        val ingredient = json["strIngredient$i"]?.jsonPrimitive?.contentOrNull?.trim()
-        val measure = json["strMeasure$i"]?.jsonPrimitive?.contentOrNull?.trim()
-        if (!ingredient.isNullOrBlank()) ingredients.add(ingredient)
-        if (!measure.isNullOrBlank()) measures.add(measure)
-    }
-
-    return Recipe(
-        idMeal = idMeal,
-        strMeal = strMeal,
-        strMealAlternative = strMealAlternative,
-        strCategory = strCategory,
-        strArea = strArea,
-        strInstructions = strInstructions,
-        strMealThumb = strMealThumb,
-        strTags = strTags,
-        strYoutube = strYoutube,
-        strIngredients = ingredients,
-        strMeasures = measures
-    )
-}
+//suspend fun fetchRecipeById(id: String): Recipe? {
+//    return withContext(Dispatchers.IO) {
+//        try {
+//            val url = "https://www.themealdb.com/api/json/v1/1/lookup.php?i=$id"
+//            val client = OkHttpClient()
+//            val request = Request.Builder().url(url).build()
+//            val response = client.newCall(request).execute()
+//            val body = response.body?.string() ?: return@withContext null
+//            val json = Json.parseToJsonElement(body).jsonObject
+//            val meals = json["meals"]?.jsonArray ?: return@withContext null
+//            val recipeJson = meals.first().jsonObject
+//            parseRecipe(recipeJson)
+//        } catch (e: Exception) {
+//            null
+//        }
+//    }
+//}
+//
+//fun parseRecipe(json: JsonObject): Recipe {
+//    val idMeal = json["idMeal"]?.jsonPrimitive?.content ?: ""
+//    val strMeal = json["strMeal"]?.jsonPrimitive?.content ?: ""
+//    val strMealAlternative = json["strMeal"]?.jsonPrimitive?.content ?: ""
+//    val strCategory = json["strCategory"]?.jsonPrimitive?.contentOrNull
+//    val strArea = json["strArea"]?.jsonPrimitive?.contentOrNull
+//    val strInstructions = json["strInstructions"]?.jsonPrimitive?.contentOrNull
+//    val strMealThumb = json["strMealThumb"]?.jsonPrimitive?.contentOrNull
+//    val strTagsRaw = json["strTags"]?.jsonPrimitive?.contentOrNull
+//    val strTags = strTagsRaw?.split(",")?.map { it.trim() } ?: emptyList()
+//    val strYoutube = json["strYoutube"]?.jsonPrimitive?.contentOrNull
+//
+//    val ingredients = mutableListOf<String>()
+//    val measures = mutableListOf<String>()
+//
+//    for (i in 1..20) {
+//        val ingredient = json["strIngredient$i"]?.jsonPrimitive?.contentOrNull?.trim()
+//        val measure = json["strMeasure$i"]?.jsonPrimitive?.contentOrNull?.trim()
+//        if (!ingredient.isNullOrBlank()) ingredients.add(ingredient)
+//        if (!measure.isNullOrBlank()) measures.add(measure)
+//    }
+//
+//    return Recipe(
+//        idMeal = idMeal,
+//        strMeal = strMeal,
+//        strMealAlternative = strMealAlternative,
+//        strCategory = strCategory,
+//        strArea = strArea,
+//        strInstructions = strInstructions,
+//        strMealThumb = strMealThumb,
+//        strTags = strTags,
+//        strYoutube = strYoutube,
+//        strIngredients = ingredients,
+//        strMeasures = measures
+//    )
+//}

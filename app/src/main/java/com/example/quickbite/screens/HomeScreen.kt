@@ -54,19 +54,12 @@ enum class HomeScreen(@StringRes val title: Int){
 fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
-    var filteredRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+    val uiState by viewModel.uiState.collectAsState()
     var selectedCategory by remember { mutableStateOf("Starter") }
 
-    LaunchedEffect(Unit) {
-        scope.launch(Dispatchers.IO) {
-            filteredRecipes = fetchFilteredRecipes("Starter")
-        }
-    }
-
-    fun loadCategory(category: String) {
-        scope.launch(Dispatchers.IO) {
-            filteredRecipes = fetchFilteredRecipes(category)
-        }
+    // Fetch recipes when screen loads or when category changes
+    LaunchedEffect(selectedCategory) {
+        viewModel.fetchRecipesByCategory(selectedCategory)
     }
 
     NavHost(
@@ -76,7 +69,7 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
     ) {
         composable(HomeScreen.List.name) {
             RecipeListScreen(
-                filteredRecipes = filteredRecipes,
+                filteredRecipes = uiState.recipeList,
                 selectedCategory = selectedCategory,
                 onRecipeClick = { recipe ->
                     viewModel.setSelectedRecipe(recipe)  //  viewModel handles selection
@@ -84,12 +77,12 @@ fun TheQuickBiteApp(viewModel: QuickBiteViewModel = viewModel()) {
                 },
                 onCategorySelected = { category ->
                     Log.d("CATEGORY_SELECTED", "User selected category: $category")
-                    loadCategory(category)
+                    selectedCategory = category
                 }
             )
         }
         composable(HomeScreen.Detail.name) {
-            val recipe = viewModel.uiState.collectAsState().value.selectedRecipe
+            val recipe = uiState.selectedRecipe
             if (recipe != null) {
                 RecipeDetailScreen(
                     recipe = recipe,
