@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
@@ -34,11 +35,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.quickbite.model.Video
 import com.example.quickbite.viewmodel.QuickBiteViewModel
+import com.example.quickbite.screens.VideoDisplay
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +55,7 @@ fun RecipeDetailScreen(
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
     val fullRecipe = uiState.selectedRecipe
+    val context = LocalContext.current
 
     LaunchedEffect(recipe.idMeal) {
         viewModel.fetchFullRecipeById(recipe.idMeal)
@@ -61,6 +66,10 @@ fun RecipeDetailScreen(
         return
     }
 
+    val video = fullRecipe.strYoutube?.let { ytUrl ->
+        val videoKey = ytUrl.substringAfter("v=")
+        Video(name = "Instructional Video", key = videoKey, url = ytUrl)
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -141,74 +150,13 @@ fun RecipeDetailScreen(
                 )
             }
 
-            item {
-                fullRecipe!!.strYoutube?.let { url ->
-                    val videoKey = url.substringAfter("v=")
-                    val video = Video(
-                        name = "Watch on YouTube",
-                        key = videoKey,
-                        url = url
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    VideoDisplay(video = video)
+            video?.let {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    VideoDisplay(video = it)
                 }
             }
+
         }
     }
 }
-
-
-//suspend fun fetchRecipeById(id: String): Recipe? {
-//    return withContext(Dispatchers.IO) {
-//        try {
-//            val url = "https://www.themealdb.com/api/json/v1/1/lookup.php?i=$id"
-//            val client = OkHttpClient()
-//            val request = Request.Builder().url(url).build()
-//            val response = client.newCall(request).execute()
-//            val body = response.body?.string() ?: return@withContext null
-//            val json = Json.parseToJsonElement(body).jsonObject
-//            val meals = json["meals"]?.jsonArray ?: return@withContext null
-//            val recipeJson = meals.first().jsonObject
-//            parseRecipe(recipeJson)
-//        } catch (e: Exception) {
-//            null
-//        }
-//    }
-//}
-//
-//fun parseRecipe(json: JsonObject): Recipe {
-//    val idMeal = json["idMeal"]?.jsonPrimitive?.content ?: ""
-//    val strMeal = json["strMeal"]?.jsonPrimitive?.content ?: ""
-//    val strMealAlternative = json["strMeal"]?.jsonPrimitive?.content ?: ""
-//    val strCategory = json["strCategory"]?.jsonPrimitive?.contentOrNull
-//    val strArea = json["strArea"]?.jsonPrimitive?.contentOrNull
-//    val strInstructions = json["strInstructions"]?.jsonPrimitive?.contentOrNull
-//    val strMealThumb = json["strMealThumb"]?.jsonPrimitive?.contentOrNull
-//    val strTagsRaw = json["strTags"]?.jsonPrimitive?.contentOrNull
-//    val strTags = strTagsRaw?.split(",")?.map { it.trim() } ?: emptyList()
-//    val strYoutube = json["strYoutube"]?.jsonPrimitive?.contentOrNull
-//
-//    val ingredients = mutableListOf<String>()
-//    val measures = mutableListOf<String>()
-//
-//    for (i in 1..20) {
-//        val ingredient = json["strIngredient$i"]?.jsonPrimitive?.contentOrNull?.trim()
-//        val measure = json["strMeasure$i"]?.jsonPrimitive?.contentOrNull?.trim()
-//        if (!ingredient.isNullOrBlank()) ingredients.add(ingredient)
-//        if (!measure.isNullOrBlank()) measures.add(measure)
-//    }
-//
-//    return Recipe(
-//        idMeal = idMeal,
-//        strMeal = strMeal,
-//        strMealAlternative = strMealAlternative,
-//        strCategory = strCategory,
-//        strArea = strArea,
-//        strInstructions = strInstructions,
-//        strMealThumb = strMealThumb,
-//        strTags = strTags,
-//        strYoutube = strYoutube,
-//        strIngredients = ingredients,
-//        strMeasures = measures
-//    )
-//}
