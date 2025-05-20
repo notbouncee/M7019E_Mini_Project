@@ -1,9 +1,6 @@
 package com.example.quickbite.screens
 
-import android.annotation.SuppressLint
-import android.content.ContentValues.TAG
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -27,11 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.quickbite.model.Video
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.example.quickbite.model.Video
 
 @Composable
 fun VideoDisplay(video: Video) {
@@ -61,7 +58,28 @@ fun VideoDisplay(video: Video) {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (video.site == "YouTube") {
+            // --- Toggle YouTube WebView vs. ExoPlayer ---
+            val useExoPlayerTestMode = false // Set to true to force ExoPlayer
+
+            if (useExoPlayerTestMode) {
+                // Hardcoded ExoPlayer test stream (e.g., mp4 or HLS)
+                val exoPlayer = remember {
+                    ExoPlayer.Builder(context).build().apply {
+                        setMediaItem(
+                            MediaItem.fromUri("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                        )
+                        prepare()
+                    }
+                }
+
+                AndroidView(
+                    factory = { PlayerView(it).apply { player = exoPlayer } },
+                    modifier = Modifier
+                        .height(180.dp)
+                        .fillMaxWidth()
+                )
+            } else if (video.site == "YouTube") {
+                // YouTube video using WebView iframe
                 AndroidView(
                     factory = { ctx ->
                         WebView(ctx).apply {
@@ -69,19 +87,19 @@ fun VideoDisplay(video: Video) {
                             settings.domStorageEnabled = true
                             webViewClient = WebViewClient()
                             val html = """
-                                 <html>
-                                     <body style="margin:0">
-                                         <iframe 
-                                             width="100%" 
-                                             height="180" 
-                                             src="https://www.youtube.com/embed/${video.key}?autoplay=0" 
-                                             frameborder="0" 
-                                             allowfullscreen>
-                                         </iframe>
-                                     </body>
-                                 </html>
-                             """.trimIndent()
-                            Log.d(TAG, "Loading YouTube video: ${video.key}")
+                                <html>
+                                    <body style="margin:0">
+                                        <iframe 
+                                            width="100%" 
+                                            height="180" 
+                                            src="https://www.youtube.com/embed/${video.key}?autoplay=0" 
+                                            frameborder="0" 
+                                            allowfullscreen>
+                                        </iframe>
+                                    </body>
+                                </html>
+                            """.trimIndent()
+                            Log.d("VideoDisplay", "Loading YouTube video: ${video.key}")
                             loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null)
                         }
                     },
@@ -90,6 +108,7 @@ fun VideoDisplay(video: Video) {
                         .fillMaxWidth()
                 )
             } else {
+                // 🌐 Other formats (non-YouTube) played directly with ExoPlayer
                 val exoPlayer = remember {
                     ExoPlayer.Builder(context).build().apply {
                         setMediaItem(MediaItem.fromUri(video.url))
@@ -111,7 +130,7 @@ fun VideoDisplay(video: Video) {
                 onClick = {
                     val intent = Intent(Intent.ACTION_VIEW, video.url.toUri())
                     context.startActivity(intent)
-                    Log.d(TAG, "Opening in external app: ${video.url}")
+                    Log.d("VideoDisplay", "Opening in external app: ${video.url}")
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
